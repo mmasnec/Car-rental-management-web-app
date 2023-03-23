@@ -1,0 +1,100 @@
+﻿@page "/vehicles/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@using WebApplication1.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<h3 class="card-title">Vehicles</h3>
+<hr />
+<br />
+
+<a href="vehicles/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create new vehicle
+</a>
+<br />
+<br />
+
+@if (Vehicles == null)
+{
+    <div class="alert alert-info">Loading vehicles...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>
+                    Make
+                </th>
+                <th>
+                    Model
+                </th>
+                <th>
+                    Year
+                </th>
+                <th>
+                    Daily Rate
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vehicle in Vehicles)
+            {
+            <tr>
+                <td>
+                    @vehicle.Make.Name
+                </td>
+                <td>
+                    @vehicle.Model.Name
+                </td>
+                <td>
+                    @vehicle.Year
+                </td>
+                <td>
+                    @vehicle.RentalRate
+                </td>
+                <td>
+                    <a href="/makes/view/@vehicle.Id" class="btn btn-primary">
+                        <span class="oi oi-book"></span>
+                    </a>
+                    <a href="/makes/edit/@vehicle.Id" class="btn btn-warning">
+                        <span class="oi oi-pencil"></span>
+                    </a>
+                    <button class="btn btn-danger" @onclick="@(()=>Delete(vehicle.Id))">
+                        <span class="oi oi-delete"></span>
+                    </button>
+                </td>
+            </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+
+@code {
+    //model for the page
+    private List<Vehicle> Vehicles;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Vehicles = await _client.GetFromJsonAsync<List<Vehicle>>("api/vehicles");
+    }
+
+    private async Task Delete(int makeId)
+    {
+        var vehicle = Vehicles.First(q => q.Id == makeId);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {vehicle.Make.Name}?"))
+        {
+            await _client.DeleteAsync($"api/vehicles/{makeId}");
+            await OnInitializedAsync();
+        }
+
+    }
+}

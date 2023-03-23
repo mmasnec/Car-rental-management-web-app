@@ -1,0 +1,66 @@
+﻿@page "/customers/create"
+
+@inject HttpClient _client
+@inject NavigationManager _navManager
+
+<h3>Create Customer</h3>
+<br />
+<hr />
+<br />
+
+<EditForm Model="@customer" OnValidSubmit="CreateCustomer">
+    <ValidationSummary></ValidationSummary>
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="form-group">
+        <label>Tax Id</label>
+        <div>
+            <InputText @bind-Value="@customer.TaxId" class="form-control"></InputText>
+            <ValidationMessage For="@(()=>customer.TaxId)"></ValidationMessage>
+        </div>
+
+    </div>
+    <div class="form-group">
+        <label>Address</label>
+        <div>
+            <InputTextArea @bind-Value="@customer.Address" class="form-control"></InputTextArea>
+            <ValidationMessage For="@(()=>customer.Address)"></ValidationMessage>
+        </div>
+
+    </div>
+    <div class="form-group">
+        <label>Contact Number</label>
+        <div>
+            <InputText @bind-Value="@customer.ContactNumber" class="form-control"></InputText>
+            <ValidationMessage For="@(()=>customer.ContactNumber)"></ValidationMessage>
+        </div>
+
+    </div>
+    <div class="form-group">
+        <label>Email Address</label>
+        <div>
+            <InputText @bind-Value="@customer.EmailAdress" class="form-control"></InputText>
+            <ValidationMessage For="@(()=>customer.EmailAdress)"></ValidationMessage>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success btn-block">Add Customer</button>
+</EditForm>
+
+
+@code {
+    Customer customer = new Customer();
+
+    private IList<Booking> Bookings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Bookings = await _client.GetFromJsonAsync<List<Booking>>("api/bookings");
+    }
+
+    public async Task CreateCustomer()
+    {
+        await _client.PostAsJsonAsync("api/customers", customer);
+        _navManager.NavigateTo("/customers/");
+    }
+}

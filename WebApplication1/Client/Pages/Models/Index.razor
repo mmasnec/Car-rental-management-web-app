@@ -1,0 +1,82 @@
+﻿@page "/models/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@using WebApplication1.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<h3 class="card-title">Car Models</h3>
+<hr />
+<br />
+<a href="models/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Model
+</a>
+<br />
+<br />
+
+
+@if (Models == null)
+{
+    <div class="alert alert-info">Loading models...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var model in Models)
+            {
+                <tr>
+                    <td>
+                        @model.Name
+                    </td>
+                    <td>
+                        <a href="/models/view/@model.Id" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/models/edit/@model.Id" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="@(()=>Delete(model.Id))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+
+@code {
+    //model for the page
+    private List<Model> Models;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Models = await _client.GetFromJsonAsync<List<Model>>("api/models");
+    }
+
+    private async Task Delete(int modelId)
+    {
+        var model = Models.First(q => q.Id == modelId);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {model.Name}?"))
+        {
+            await _client.DeleteAsync($"api/models/{modelId}");
+            await OnInitializedAsync();
+        }
+
+    }
+}

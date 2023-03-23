@@ -1,0 +1,81 @@
+﻿@page "/makes/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@using WebApplication1.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<h3 class="card-title">Car Makes</h3>
+<hr />
+<br />
+<a href="makes/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create New Make
+</a>
+
+
+
+@if (Makes == null)
+{
+    <div class="alert alert-info">Loading makes...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var make in Makes)
+            {
+                <tr>
+                    <td>
+                        @make.Name
+                    </td>
+                    <td>
+                        <a href="/makes/view/@make.Id" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/makes/edit/@make.Id" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="@(()=>Delete(make.Id))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+
+@code {
+    //model for the page
+    private List<Make> Makes;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Makes = await _client.GetFromJsonAsync<List<Make>>("api/makes");
+    }
+
+    private async Task Delete(int makeId)
+    {
+        var make = Makes.First(q => q.Id == makeId);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {make.Name}?"))
+        {
+            await _client.DeleteAsync($"api/makes/{makeId}");
+            await OnInitializedAsync();
+        }
+
+    }
+}

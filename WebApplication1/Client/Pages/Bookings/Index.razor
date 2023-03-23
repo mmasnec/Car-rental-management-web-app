@@ -1,0 +1,92 @@
+﻿@page "/bookings/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@using WebApplication1.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<h3 class="card-title">Bookings</h3>
+<hr />
+<br />
+<a href="bookings/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Create new booking
+</a>
+<br />
+<br />
+@if (Bookings == null)
+{
+    <div class="alert alert-info">Loading bookings...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>
+                    Customer Tax ID
+                </th>
+                <th>
+                    Date
+                </th>
+                <th>
+                    Duration
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var booking in Bookings)
+            {
+                <tr>
+                    <td>
+                        @booking.Customer.TaxId
+                    </td>
+                    <td>
+                        @booking.DateCreated.Date.ToString("dd MMMM yyyy")
+                    </td>
+                    <td>
+                        @((booking.DateIn - booking.DateOut).ToString());
+                    </td>
+                    <td>
+                        <a href="/makes/view/@booking.Id" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/makes/edit/@booking.Id" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="@(()=>Delete(booking.Id))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+
+@code {
+    //model for the page
+    private List<Booking> Bookings;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Bookings = await _client.GetFromJsonAsync<List<Booking>>("api/bookings");
+    }
+
+    private async Task Delete(int bookingsId)
+    {
+        var booking = Bookings.First(q => q.Id == bookingsId);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {booking.Customer.TaxId}?"))
+        {
+            await _client.DeleteAsync($"api/booking/{bookingsId}");
+            await OnInitializedAsync();
+        }
+
+    }
+}

@@ -1,0 +1,79 @@
+﻿@page "/colours/"
+@inject HttpClient _client
+@inject IJSRuntime js
+@using WebApplication1.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+
+<h3 class="card-title">Colours</h3>
+<hr />
+<br />
+<a href="colours/create" class="btn btn-secondary">
+    <span class="oi oi-plus"></span>
+    Add New Colour
+</a>
+
+@if (Colours == null)
+{
+    <div class="alert alert-info">Loading colours...</div>
+}
+else
+{
+    <table class="table table-responsive">
+        <thead>
+            <tr>
+                <th>
+                    Name
+                </th>
+                <th>
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var colour in Colours)
+            {
+                <tr>
+                    <td>
+                        @colour.Name
+                    </td>
+                    <td>
+                        <a href="/colours/view/@colour.Id" class="btn btn-primary">
+                            <span class="oi oi-book"></span>
+                        </a>
+                        <a href="/colours/edit/@colour.Id" class="btn btn-warning">
+                            <span class="oi oi-pencil"></span>
+                        </a>
+                        <button class="btn btn-danger" @onclick="@(()=>Delete(colour.Id))">
+                            <span class="oi oi-delete"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+
+
+@code {
+    //model for the page
+    private List<Colour> Colours;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Colours = await _client.GetFromJsonAsync<List<Colour>>("api/colours");
+    }
+
+    private async Task Delete(int colourId)
+    {
+        var colour = Colours.First(q => q.Id == colourId);
+        if (await js.InvokeAsync<bool>("confirm", $"Do you want to delete {colour.Name}?"))
+        {
+            await _client.DeleteAsync($"api/colours/{colourId}");
+            await OnInitializedAsync();
+        }
+
+    }
+}
